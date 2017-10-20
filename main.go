@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
+	"strings"
 )
 
 func logErrorOrDie(err error) {
@@ -18,7 +18,6 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 	command := args[0]
-	fmt.Println(command)
 	if command == "tunnel" {
 		localAddr := ""
 		if len(args) > 1 {
@@ -31,6 +30,8 @@ func main() {
 		}
 		err := TunnelByProjectID(*apiKey, *projectID, localAddr, false)
 		logErrorOrDie(err)
+	} else if strings.HasPrefix(command, "chrome") {
+		StartChromeNativeClient()
 	}
 
 }

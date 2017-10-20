@@ -21,7 +21,11 @@ type HostRegistration struct {
 
 func TunnelByProjectID(apiKey string, projectId int, localAddr string, daemon bool) (err error) {
 	req, err := http.NewRequest("GET", "https://www.butterflyfx.io/api/projects/"+strconv.Itoa(projectId)+"/tunnel", nil)
-	req.Header.Add("Authorization", "Bearer "+apiKey)
+	if len(apiKey) > 60 {
+		req.Header.Add("Authorization", "JWT "+apiKey)
+	} else {
+		req.Header.Add("Authorization", "Bearer "+apiKey)
+	}
 	httpClient := http.Client{
 		CheckRedirect: func(redirRequest *http.Request, via []*http.Request) error {
 			// Go's http.DefaultClient does not forward headers when a redirect 3xx
