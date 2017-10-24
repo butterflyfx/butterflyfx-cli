@@ -12,9 +12,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
+	"html/template"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
+	"path"
+	"path/filepath"
 )
 
 var StdOut = os.Stdout
@@ -113,4 +119,75 @@ func readMessageLength(msg []byte) int {
 	buf := bytes.NewBuffer(msg)
 	binary.Read(buf, binary.LittleEndian, &length)
 	return int(length)
+}
+
+func fileExists(name string) bool {
+	_, err := os.Stat(name)
+	return !os.IsNotExist(err)
+}
+
+type ManifestData struct {
+	Path string
+}
+
+// func installChromeManifestRegistry(location string) (err error) {
+// 	k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Google\Chrome\NativeMessagingHosts\io.butterflyfx.client`, registry.QUERY_VALUE|registry.SET_VALUE)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	if err := k.SetStringValue("xyz", "blahblah"); err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	if err := k.Close(); err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
+
+func InstallChromeManifest() (err error) {
+	hasBeenInstalled := false
+	templateString, err := Asset("data/io.butterflyfx.client.template.json")
+	if err != nil {
+		return err
+	}
+	filePath, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		return err
+	}
+	data := ManifestData{Path: filePath}
+	t, err := template.New("chrome-manifest").Parse(string(templateString))
+	var tpl bytes.Buffer
+	t.Execute(&tpl, data)
+	manifestContent := tpl.Bytes()
+	usr, err := user.Current()
+	if err != nil {
+		return err
+	}
+	home := usr.HomeDir
+	paths := []string{
+		path.Join(home, ".config", "google-chrome"),
+		path.Join(home, ".config", "google-chrome-beta"),
+		path.Join(home, ".config", "google-chrome-unstable"),
+		path.Join(home, "Library", "Application Support", "Google", "Chrome"),
+		path.Join(home, "Library", "Application Support", "Google", "Chromium"),
+	}
+	for _, dir := range paths {
+		if fileExists(dir) {
+			nativeDirectory := path.Join(dir, "NativeMessagingHosts")
+			manifestFile := path.Join(nativeDirectory, "io.butterflyfx.client.json")
+			if !fileExists(nativeDirectory) {
+				err = os.Mkdir(nativeDirectory, 0755)
+			}
+			err = ioutil.WriteFile(manifestFile, manifestContent, 0755)
+			if err != nil {
+				return err
+			}
+			hasBeenInstalled = true
+			log.Println(manifestFile)
+		}
+	}
+
+	if !hasBeenInstalled {
+		err = errors.New("Chrome manifest was not installed")
+	}
+	return
 }

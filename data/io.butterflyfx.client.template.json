@@ -1,0 +1,10 @@
+{
+  "name": "io.butterflyfx.client",
+  "description": "ButterflyFX Client",
+  "path": "{{.Path}}",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://fingnfgimomkbccoifmdkjchccebcmfi/",
+    "chrome-extension://ilmppabbifdfpdjclondiaiidmjgnnpf/"
+  ]
+}

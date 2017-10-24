@@ -30,6 +30,8 @@ func main() {
 		}
 		err := TunnelByProjectID(*apiKey, *projectID, localAddr, false)
 		logErrorOrDie(err)
+	} else if command == "install" {
+		InstallChromeManifest()
 	} else if strings.HasPrefix(command, "chrome") {
 		StartChromeNativeClient()
 	}
