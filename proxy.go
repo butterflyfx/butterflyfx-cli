@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 )
 
 func newDirector(r *http.Request) func(*http.Request) {
@@ -31,7 +32,11 @@ func GenerateProxyServer() (net.Listener, error) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		director := func(req *http.Request) {
 			req.Host = r.Header.Get("X-Forwarded-Host")
-			req.URL.Host = req.Host + ":" + r.Header.Get("X-Forwarded-Port")
+			if strings.Contains(req.Host, ":") {
+				req.URL.Host = req.Host
+			} else {
+				req.URL.Host = req.Host + ":" + r.Header.Get("X-Forwarded-Port")
+			}
 			req.URL.Scheme = r.Header.Get("X-Forwarded-Proto")
 
 			reqLog, err := httputil.DumpRequestOut(req, false)
